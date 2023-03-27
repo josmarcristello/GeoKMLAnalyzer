@@ -176,3 +176,60 @@ def write_to_csv(df, file_name):
     os.makedirs(os.path.dirname(output_file_name), exist_ok=True)
 
     df.to_csv(output_file_name, index=False, encoding="ISO-8859-1")    
+
+def plot_elevation_profile(df, file_name, show_plot=True):
+    """
+    Create elevation profile plots against the number of samples and the estimated distance.
+    
+    Parameters:
+    df (pd.DataFrame): A DataFrame containing 'Lat', 'Lon', 'Elevation', and 'Distance' columns
+    file_name (str): The name of the KML file used to generate the DataFrame, including the '.kml' extension
+    show_plot (bool): Optional; If True, display the plot; default is True
+    
+    Output:
+    Saves two plots: 'altitude_x_samples_{file_name}.png' and 'altitude_x_distance_{file_name}.png'
+    """
+    SMALL_SIZE = 12
+    MEDIUM_SIZE = 14
+    BIGGER_SIZE = 16
+
+    plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
+    plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
+    plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
+    plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+    plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+    plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
+    plt.rc('axes', titlesize=BIGGER_SIZE)    # fontsize of the figure title
+
+    # Plot elevation profile against # Samples
+    plt.figure(figsize=(28, 4))
+    plt.plot(df['Elevation[m]'])
+
+    plt.title(f'Elevation(m) x # Samples for {file_name}')
+    plt.ylabel("Elevation(m)")
+    plt.xlabel("Samples (#)")
+
+    plt.xlim([0, len(df)])
+
+    plt.grid()
+    #plt.legend(fontsize='small')
+    plt.savefig(f'output/altitude_x_samples_{file_name.replace(".kml", ".png")}', dpi=450, bbox_inches='tight', transparent=False)
+    if show_plot:
+        plt.show()
+
+    # Plot elevation profile against distance (estimated)
+    plt.figure(figsize=(28, 4))
+    x = np.linspace(0.0, df['Distance[Km]'].sum(), num=len(df))  # Making x axis data
+    plt.plot(x, df['Elevation[m]'])
+
+    plt.title(f'Elevation(m) x Distance (km) for {file_name}')
+    plt.ylabel("Elevation(m)")
+    plt.xlabel("Distance(km)")
+
+    plt.xlim([0, df['Distance[Km]'].sum()])
+
+    plt.grid()
+    #plt.legend(fontsize='small')
+    plt.savefig(f'output/altitude_x_distance_{file_name.replace(".kml", ".png")}', dpi=450, bbox_inches='tight', transparent=False)
+    if show_plot:
+        plt.show()
