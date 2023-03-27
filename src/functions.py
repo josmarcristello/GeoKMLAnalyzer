@@ -134,3 +134,27 @@ def haversine(lat1, lon1, lat2, lon2):
     distance = 2 * EARTH_RADIUS * math.asin(math.sqrt(a))
 
     return distance
+
+def calculate_distances(df):
+    """
+    Calculate distances between consecutive latitude and longitude pairs in the input DataFrame using the provided haversine function.
+    
+    Parameters:
+    df (pd.DataFrame): A DataFrame containing 'Lat' and 'Lon' columns with latitude and longitude values
+    
+    Returns:
+    pd.DataFrame: A DataFrame containing the original 'Lat' and 'Lon' columns, plus an additional 'Distance' column with the calculated distances in kilometers
+    """
+    d_list = []
+
+    for i in range(len(df) - 1):
+        lat1, lon1 = df.iloc[i]['Lat'], df.iloc[i]['Lon']
+        lat2, lon2 = df.iloc[i + 1]['Lat'], df.iloc[i + 1]['Lon']
+        
+        dp = haversine(lat1, lon1, lat2, lon2) / 1000  # km
+        d_list.append(dp)
+
+    # Add the distances to the DataFrame and set the last distance value to 0
+    df['Distance[Km]'] = d_list + [0]
+    
+    return df
