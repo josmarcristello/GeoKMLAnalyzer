@@ -40,3 +40,4 @@ config.ini
 
 # Output data files
 output/*
+data/*
