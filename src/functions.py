@@ -37,3 +37,32 @@ def process_coordinate_string(coord_string):
             lat_lng_values.extend([lat, lng])
 
     return lat_lng_values
+
+def kml2df(file_name):
+    """
+    Convert a KML file containing latitude and longitude coordinates to a DataFrame.
+    
+    Parameters:
+    file_name (str): The input KML file name, including the '.kml' extension
+    
+    Returns:
+    pd.DataFrame: A DataFrame containing 'Lat' and 'Lon' columns with the latitude and longitude values.
+    """
+    kml_file_path = f"data/kml/{file_name}"
+        
+    with open(kml_file_path, 'r') as kml_file:
+        kml_content = BeautifulSoup(kml_file, 'xml')
+
+    latitudes, longitudes = [], []
+
+    for coordinates in kml_content.find_all('coordinates'):
+        data = process_coordinate_string(coordinates.string)
+        lat_coords = [float(value) for index, value in enumerate(data) if index % 2 == 0]
+        lon_coords = [float(value) for index, value in enumerate(data) if index % 2 == 1]
+
+        latitudes.extend(lat_coords)
+        longitudes.extend(lon_coords)
+
+    coordinate_df = pd.DataFrame({'Lat': latitudes, 'Lon': longitudes})
+
+    return coordinate_df
