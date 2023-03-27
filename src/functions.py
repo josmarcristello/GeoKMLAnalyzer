@@ -108,6 +108,7 @@ def haversine(lat1, lon1, lat2, lon2):
     """
     Calculate the great-circle distance between two points on the Earth's surface
     using the Haversine formula.
+    NOTE: Deprecated, use geopy.distance.geodesic instead for better accuracy.
     
     Parameters:
     lat1 (float): Latitude of the first point in decimal degrees
@@ -135,9 +136,31 @@ def haversine(lat1, lon1, lat2, lon2):
 
     return distance
 
+
+from geopy.distance import geodesic
+
+def geodesic_distance(lat1, lon1, lat2, lon2):
+    """
+    Calculate the geodesic distance between two latitude-longitude pairs.
+    
+    Parameters:
+    lat1 (float): Latitude of the first point
+    lon1 (float): Longitude of the first point
+    lat2 (float): Latitude of the second point
+    lon2 (float): Longitude of the second point
+    
+    Returns:
+    float: The geodesic distance in kilometers between the two points
+    """
+    point1 = (lat1, lon1)
+    point2 = (lat2, lon2)
+
+    return geodesic(point1, point2).kilometers
+
+
 def calculate_distances(df):
     """
-    Calculate distances between consecutive latitude and longitude pairs in the input DataFrame using the provided haversine function.
+    Calculate distances between consecutive latitude and longitude pairs in the input DataFrame using the provided Vincenty function.
     
     Parameters:
     df (pd.DataFrame): A DataFrame containing 'Lat' and 'Lon' columns with latitude and longitude values
@@ -151,7 +174,8 @@ def calculate_distances(df):
         lat1, lon1 = df.iloc[i]['Lat'], df.iloc[i]['Lon']
         lat2, lon2 = df.iloc[i + 1]['Lat'], df.iloc[i + 1]['Lon']
         
-        dp = haversine(lat1, lon1, lat2, lon2) / 1000  # km
+        #dp = haversine(lat1, lon1, lat2, lon2) / 1000  # km
+        dp = geodesic_distance(lat1, lon1, lat2, lon2) / 1000  # km
         d_list.append(dp)
 
     # Add the distances to the DataFrame and set the last distance value to 0
