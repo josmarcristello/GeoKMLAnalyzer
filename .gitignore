@@ -1,0 +1,39 @@
+# .gitignore
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyc
+
+# Virtual environments
+venv/
+.env/
+env/
+ENV/
+
+# Jupyter Notebook artifacts
+.ipynb_checkpoints/
+
+# IDE artifacts
+.vscode/
+.idea/
+
+# Distribution and build
+dist/
+build/
+*.egg-info/
+
+# Configuration files
+config.ini
+*.env
+
+# Logs and temporary files
+*.log
+*.tmp
+*.swp
+*.swo
+*.swn
+*.bak
+*.orig
