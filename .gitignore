@@ -37,3 +37,6 @@ config.ini
 *.swn
 *.bak
 *.orig
+
+# Output data files
+output/*
