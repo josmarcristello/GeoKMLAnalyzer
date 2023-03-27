@@ -66,3 +66,39 @@ def kml2df(file_name):
     coordinate_df = pd.DataFrame({'Lat': latitudes, 'Lon': longitudes})
 
     return coordinate_df
+
+def get_elevation_data(df, API_KEY, num_samples=10):
+    """
+    Retrieve elevation data for latitude and longitude pairs in the input DataFrame using Google Maps Elevation API.
+    
+    Parameters:
+    df (pd.DataFrame): A DataFrame containing 'Lat' and 'Lon' columns with latitude and longitude values
+    API_KEY (str): Your Google Maps Elevation API key
+    num_samples (int, optional): The number of samples per latitude and longitude pair. Default is 10.
+    
+    Returns:
+    pd.DataFrame: A DataFrame containing 'Elevation', 'Lat', and 'Lon' columns with retrieved data
+    """
+    elev_list = []
+    lat_list = []
+    lon_list = []
+
+    for i in tqdm(range(len(df) - 1), desc="Retrieving elevation data", unit="rows"):
+        lat1, lon1 = df.iloc[i]['Lat'], df.iloc[i]['Lon']
+        lat2, lon2 = df.iloc[i + 1]['Lat'], df.iloc[i + 1]['Lon']
+        
+        url = f"https://maps.googleapis.com/maps/api/elevation/json?path={lat1}%2C{lon1}%7C{lat2}%2C{lon2}&samples={num_samples}&key={API_KEY}"
+        
+        payload = {}
+        headers = {}
+        response = requests.request("GET", url, headers=headers, data=payload)
+
+        js_str = json.loads(response.text)
+        response_len = len(js_str['results'])
+        
+        for j in range(response_len):
+            elev_list.append(js_str['results'][j]['elevation'])
+            lat_list.append(js_str['results'][j]['location']['lat'])
+            lon_list.append(js_str['results'][j]['location']['lng'])
+
+    return pd.DataFrame({'Lat': lat_list, 'Lon': lon_list, 'Elevation[m]': elev_list})
