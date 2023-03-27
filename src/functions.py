@@ -158,3 +158,21 @@ def calculate_distances(df):
     df['Distance[Km]'] = d_list + [0]
     
     return df
+
+def write_to_csv(df, file_name):
+    """
+    Write the input DataFrame with latitude, longitude, elevation, and distance values to a CSV file.
+    
+    Parameters:
+    df (pd.DataFrame): A DataFrame containing 'Lat', 'Lon', 'Elevation', and 'Distance' columns
+    file_name (str): The name of the KML file used to generate the DataFrame, including the '.kml' extension
+    
+    Output:
+    Creates a CSV file with the name 'altitudes_{file_name}.csv', containing 'Lat', 'Lon', 'Elevation', and 'Distance' columns.
+    """
+    output_file_name = f"output/altitudes_{file_name.replace('.kml', '.csv')}"
+    
+    # Ensure the output directory exists
+    os.makedirs(os.path.dirname(output_file_name), exist_ok=True)
+
+    df.to_csv(output_file_name, index=False, encoding="ISO-8859-1")    
