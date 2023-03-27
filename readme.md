@@ -60,6 +60,14 @@ src/notebook/get-google-maps-altitude
 ```
 You can explore the generated descriptive statistics and plots to analyze elevation profiles for your KML files.
 
+## Sample Images
+### Progress bar:
+
+![Progress Bar](./public/progress_bar.gif)
+
+### Altitude x Distance Plot:
+![Altitude x Distance Plot](./public/altitude_x_distance_sample.png)
+
 ## Contributing
 
 We welcome contributions to improve this project. Please submit a pull request with your proposed changes, and ensure your code follows the project's style guidelines and best practices.
