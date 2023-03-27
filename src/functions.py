@@ -102,3 +102,35 @@ def get_elevation_data(df, API_KEY, num_samples=10):
             lon_list.append(js_str['results'][j]['location']['lng'])
 
     return pd.DataFrame({'Lat': lat_list, 'Lon': lon_list, 'Elevation[m]': elev_list})
+
+
+def haversine(lat1, lon1, lat2, lon2):
+    """
+    Calculate the great-circle distance between two points on the Earth's surface
+    using the Haversine formula.
+    
+    Parameters:
+    lat1 (float): Latitude of the first point in decimal degrees
+    lon1 (float): Longitude of the first point in decimal degrees
+    lat2 (float): Latitude of the second point in decimal degrees
+    lon2 (float): Longitude of the second point in decimal degrees
+    
+    Returns:
+    float: The great-circle distance between the two points in meters
+    """
+    # Earth's radius in meters
+    EARTH_RADIUS = 6371000
+
+    # Convert latitude and longitude from decimal degrees to radians
+    lat1_rad, lat2_rad = math.radians(lat1), math.radians(lat2)
+    lon1_rad, lon2_rad = math.radians(lon1), math.radians(lon2)
+
+    # Calculate the differences in latitude and longitude
+    delta_lat = lat2_rad - lat1_rad
+    delta_lon = lon2_rad - lon1_rad
+
+    # Haversine formula
+    a = math.sin(delta_lat/2)**2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(delta_lon/2)**2
+    distance = 2 * EARTH_RADIUS * math.asin(math.sqrt(a))
+
+    return distance
