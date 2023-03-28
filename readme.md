@@ -2,17 +2,25 @@
 
 ## Overview
 
-The Geo Kml Analyzer is a Python-based tool designed to process and analyze elevation data from KML files. The tool reads KML files, extracts latitude and longitude coordinates, calculates distances between consecutive points, fetches elevation data from the Google Maps Elevation API, and generates descriptive statistics and plots for elevation profiles. This project aims to help users visualize and understand elevation profiles of geographical paths, such as hiking trails, roads, or pipelines.
+The Geo Kml Analyzer is a Python-based tool designed to process and analyze elevation data from KML files. The tool reads KML files, extracts latitude and longitude coordinates, calculates distances between consecutive points, fetches elevation data from the Google Maps Elevation API, and generates descriptive statistics and plots for elevation profiles. Additionally, it supports including pins from separate KML files, finding the closest points on the route to these pins, and displaying them on the plots. This project aims to help users visualize and understand elevation profiles of geographical paths, such as hiking trails, roads, or pipelines.
 
 ## Features
 
+### Data Processing and Analysis
 - Reads and processes KML files containing latitude and longitude data
-- Converts KML files to CSV format for easy data manipulation
-- Calculates distances between consecutive latitude and longitude pairs using the Haversine formula
+- Supports optional KML files with pins for labeling specific points on the route
+- Calculates distances between consecutive latitude and longitude pairs using the Vincenty formula
 - Fetches elevation data from the Google Maps Elevation API
 - Generates descriptive statistics for distance, elevation, latitude, and longitude
+- Exports processed data to CSV files
+
+### Visualization
 - Creates plots for elevation profiles against sample count and distance
-- Exports processed data to CSV files and saves plots as images
+- Includes pin labels on plots, automatically adjusting their positions to avoid overlap
+
+### User Interface
+- Converts KML files to CSV format for easy data manipulation
+- Saves plots as images
 - Displays a progress bar to track the processing status
 
 ## Installation
