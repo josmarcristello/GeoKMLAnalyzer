@@ -13,9 +13,9 @@ The Geo Kml Analyzer is a Python-based tool designed to process and analyze elev
 ### Data Processing and Analysis
   - Reads and processes KML files containing latitude and longitude data
   - Supports optional KML files with pins for labeling specific points on the route
-  - Calculates distances between consecutive latitude and longitude pairs using the Vincenty formula
-  - Fetches elevation data from the Google Maps Elevation API, interpolating within the data to target a resolution distance of 1 meter, with a maximum interpolation of 512 times
-  - Fetches elevation data from the Google Maps Elevation API
+  - Calculates distances between consecutive latitude and longitude pairs using the [Vincenty formula](https://en.wikipedia.org/wiki/Vincenty%27s_formulae)
+  - Fetches elevation data from the Google [Maps Elevation API](https://developers.google.com/maps/documentation/elevation/overview)
+  - Interpolates (up to 512 times) within the data to target a resolution distance of 1 meter
   - Generates descriptive statistics for distance, elevation, latitude, and longitude
   - Exports processed data to CSV files
 
@@ -27,6 +27,9 @@ The Geo Kml Analyzer is a Python-based tool designed to process and analyze elev
   - Converts KML files to CSV format for easy data manipulation
   - Saves plots as images
   - Displays a progress bar to track the processing status
+
+## TODO
+- Optimize number of requests for the data size. Pass arrays of data and limit to [8192 characters](https://developers.google.com/maps/documentation/elevation/requests-elevation).
 
 ## Installation
 
@@ -80,6 +83,12 @@ You can explore the generated descriptive statistics and plots to analyze elevat
 
 ### Altitude x Distance Plot:
 ![Altitude x Distance Plot](./public/altitude_x_distance_sample.png)
+
+
+## Notes
+
+[Google Maps](https://developers.google.com/maps/documentation/elevation/usage-and-billing) API charges approximately 5 USD / 1 000 requests, depending on volume. They also gives $200 USD in credits every month, so that translates to 40 000 free requests per month.
+
 
 ## Contributing
 
