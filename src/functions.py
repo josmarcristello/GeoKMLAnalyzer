@@ -108,7 +108,7 @@ def haversine(lat1, lon1, lat2, lon2):
     """
     Calculate the great-circle distance between two points on the Earth's surface
     using the Haversine formula.
-    NOTE: Deprecated, use geopy.distance.geodesic instead for better accuracy.
+    NOTE: Deprecated for general use, use geopy.distance.geodesic instead for better accuracy. Still maintained for performance purposes (much faster).
     
     Parameters:
     lat1 (float): Latitude of the first point in decimal degrees
@@ -141,7 +141,7 @@ from geopy.distance import geodesic
 
 def geodesic_distance(lat1, lon1, lat2, lon2):
     """
-    Calculate the geodesic distance between two latitude-longitude pairs.
+    Calculate the geodesic distance between two latitude-longitude pairs using the Vincenty function.
     
     Parameters:
     lat1 (float): Latitude of the first point
@@ -257,3 +257,18 @@ def plot_elevation_profile(df, file_name, show_plot=True):
     plt.savefig(f'output/altitude_x_distance_{file_name.replace(".kml", ".png")}', dpi=450, bbox_inches='tight', transparent=False)
     if show_plot:
         plt.show()
+        
+def parse_pins(file_name):
+    kml_file_path = f"data/kml/{file_name}"
+
+    with open(kml_file_path, 'r') as kml_file:
+        kml_content = BeautifulSoup(kml_file, 'xml')
+
+    pins = []
+    for placemark in kml_content.find_all('Placemark'):
+        pin_name = placemark.find('name').string
+        coordinates = placemark.find('coordinates').string.strip().split(',')
+        lat, lon = float(coordinates[1]), float(coordinates[0])
+        pins.append((pin_name, lat, lon))
+
+    return pins
