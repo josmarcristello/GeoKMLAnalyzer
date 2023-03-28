@@ -258,7 +258,16 @@ def plot_elevation_profile(df, file_name, show_plot=True):
     if show_plot:
         plt.show()
         
+        
 def parse_pins(file_name):
+    """
+    Parse a KML file containing pins with coordinates and return a list of tuples containing the pin name, latitude, and longitude.
+
+    :param file_name: The name of the KML file located in the "data/kml/" directory.
+    :type file_name: str
+    :return: A list of tuples containing the pin name, latitude, and longitude, e.g., [('pin1', lat1, lon1), ('pin2', lat2, lon2)].
+    :rtype: list of tuple
+    """
     kml_file_path = f"data/kml/{file_name}"
 
     with open(kml_file_path, 'r') as kml_file:
@@ -272,3 +281,27 @@ def parse_pins(file_name):
         pins.append((pin_name, lat, lon))
 
     return pins
+
+
+def find_closest_points_for_pins(geo_df, pins):
+    """
+    Find the closest points on the route for each pin and add the pin label to the corresponding row in the DataFrame.
+
+    :param geo_df: A GeoDataFrame with the route data containing columns ['Lat', 'Lon']. It can optionally contain altitude ['Elevation'] and distance ['Distance'] columns.
+    :param pins: A list of tuples, where each tuple contains the pin name, latitude, and longitude, e.g., [('pin1', lat1, lon1), ('pin2', lat2, lon2)].
+    """
+    # Find the closest point on the route for each pin
+    for pin_name, pin_lat, pin_lon in pins:
+        min_distance = float('inf')
+        closest_point_index = -1
+
+        for i, row in geo_df.iterrows():
+            lat, lon = row['Lat'], row['Lon']
+            distance = haversine(pin_lat, pin_lon, lat, lon)
+
+            if distance < min_distance:
+                min_distance = distance
+                closest_point_index = i
+
+        # Add the pin label to the closest point on the route
+        geo_df.loc[closest_point_index, 'Pin'] = pin_name
