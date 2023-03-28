@@ -41,3 +41,6 @@ config.ini
 # Output data files
 output/*
 data/*
+
+# Exclude the data/kml/sample.kml file from being ignored
+!data/kml/sample.kml
