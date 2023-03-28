@@ -1,6 +1,6 @@
 import os
 
-# Standard library imports      
+# Standard library imports
 import json
 import math
 import requests
@@ -9,11 +9,13 @@ import requests
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import itertools
 
 # Local application/library-specific imports
-from dotenv import load_dotenv
 from bs4 import BeautifulSoup # Note: Also install lxml parser
 from tqdm import tqdm
+from geopy.distance import geodesic
+
 
 def process_coordinate_string(coord_string):
     """
@@ -21,7 +23,7 @@ def process_coordinate_string(coord_string):
     
     Parameters:
     coord_string (str): A string containing coordinate data from a KML file
-    
+
     Returns:
     list: A list of alternating latitude and longitude values extracted from the input string
     """
@@ -67,43 +69,6 @@ def kml2df(file_name):
 
     return coordinate_df
 
-def get_elevation_data(df, API_KEY, num_samples=10):
-    """
-    Retrieve elevation data for latitude and longitude pairs in the input DataFrame using Google Maps Elevation API.
-    
-    Parameters:
-    df (pd.DataFrame): A DataFrame containing 'Lat' and 'Lon' columns with latitude and longitude values
-    API_KEY (str): Your Google Maps Elevation API key
-    num_samples (int, optional): The number of samples per latitude and longitude pair. Default is 10.
-    
-    Returns:
-    pd.DataFrame: A DataFrame containing 'Elevation', 'Lat', and 'Lon' columns with retrieved data
-    """
-    elev_list = []
-    lat_list = []
-    lon_list = []
-
-    for i in tqdm(range(len(df) - 1), desc="Retrieving elevation data", unit="rows"):
-        lat1, lon1 = df.iloc[i]['Lat'], df.iloc[i]['Lon']
-        lat2, lon2 = df.iloc[i + 1]['Lat'], df.iloc[i + 1]['Lon']
-        
-        url = f"https://maps.googleapis.com/maps/api/elevation/json?path={lat1}%2C{lon1}%7C{lat2}%2C{lon2}&samples={num_samples}&key={API_KEY}"
-        
-        payload = {}
-        headers = {}
-        response = requests.request("GET", url, headers=headers, data=payload)
-
-        js_str = json.loads(response.text)
-        response_len = len(js_str['results'])
-        
-        for j in range(response_len):
-            elev_list.append(js_str['results'][j]['elevation'])
-            lat_list.append(js_str['results'][j]['location']['lat'])
-            lon_list.append(js_str['results'][j]['location']['lng'])
-
-    return pd.DataFrame({'Lat': lat_list, 'Lon': lon_list, 'Elevation[m]': elev_list})
-
-
 def haversine(lat1, lon1, lat2, lon2):
     """
     Calculate the great-circle distance between two points on the Earth's surface
@@ -137,7 +102,55 @@ def haversine(lat1, lon1, lat2, lon2):
     return distance
 
 
-from geopy.distance import geodesic
+def get_elevation_data(df, API_KEY, num_samples=10):
+    """
+    Retrieve elevation data for latitude and longitude pairs in the input DataFrame using Google Maps Elevation API.
+    
+    Parameters:
+    df (pd.DataFrame): A DataFrame containing 'Lat' and 'Lon' columns with latitude and longitude values
+    API_KEY (str): Your Google Maps Elevation API key
+    num_samples (int, optional): The number of samples per latitude and longitude pair. Default is 10.
+    
+    Returns:
+    pd.DataFrame: A DataFrame containing 'Elevation', 'Lat', and 'Lon' columns with retrieved data
+    """
+    elev_list = []
+    lat_list = []
+    lon_list = []
+
+    for i in tqdm(range(len(df) - 1), desc="Retrieving elevation data", unit="rows"):
+        lat1, lon1 = df.iloc[i]['Lat'], df.iloc[i]['Lon']
+        lat2, lon2 = df.iloc[i + 1]['Lat'], df.iloc[i + 1]['Lon']
+        
+        # Calculate distance and determine num_samples
+        distance = geodesic_distance(lat1, lon1, lat2, lon2)*1000
+        if distance > 1:
+            num_samples = min(int(distance), 512)
+        else:
+            num_samples = 2
+        
+        url = f"https://maps.googleapis.com/maps/api/elevation/json?path={lat1}%2C{lon1}%7C{lat2}%2C{lon2}&samples={num_samples}&key={API_KEY}"
+        
+        payload = {}
+        headers = {}
+        response = requests.request("GET", url, headers=headers, data=payload)
+
+        js_str = json.loads(response.text)
+        response_len = len(js_str['results'])
+        
+        # Adjust the range to exclude the last point
+        for j in range(response_len - 1):
+            elev_list.append(js_str['results'][j]['elevation'])
+            lat_list.append(js_str['results'][j]['location']['lat'])
+            lon_list.append(js_str['results'][j]['location']['lng'])
+
+    # Manually add the last point from the last set of points
+    elev_list.append(js_str['results'][-1]['elevation'])
+    lat_list.append(js_str['results'][-1]['location']['lat'])
+    lon_list.append(js_str['results'][-1]['location']['lng'])
+
+    return pd.DataFrame({'Lat': lat_list, 'Lon': lon_list, 'Elevation[m]': elev_list})
+
 
 def geodesic_distance(lat1, lon1, lat2, lon2):
     """
@@ -166,7 +179,7 @@ def calculate_distances(df):
     df (pd.DataFrame): A DataFrame containing 'Lat' and 'Lon' columns with latitude and longitude values
     
     Returns:
-    pd.DataFrame: A DataFrame containing the original 'Lat' and 'Lon' columns, plus an additional 'Distance' column with the calculated distances in kilometers
+    pd.DataFrame: A DataFrame containing the orDelta_Distance[m]iginal 'Lat' and 'Lon' columns, plus an additional 'Distance' column with the calculated distances in kilometers
     """
     d_list = []
 
@@ -175,11 +188,11 @@ def calculate_distances(df):
         lat2, lon2 = df.iloc[i + 1]['Lat'], df.iloc[i + 1]['Lon']
         
         #dp = haversine(lat1, lon1, lat2, lon2) / 1000  # km
-        dp = geodesic_distance(lat1, lon1, lat2, lon2) / 1000  # km
+        dp = geodesic_distance(lat1, lon1, lat2, lon2)*1000 # km → m
         d_list.append(dp)
 
     # Add the distances to the DataFrame and set the last distance value to 0
-    df['Distance[Km]'] = d_list + [0]
+    df['Delta_Distance[m]'] = d_list + [0]
     
     return df
 
@@ -194,6 +207,9 @@ def write_to_csv(df, file_name):
     Output:
     Creates a CSV file with the name 'altitudes_{file_name}.csv', containing 'Lat', 'Lon', 'Elevation', and 'Distance' columns.
     """
+    
+    df['Distance[m]'] = df['Delta_Distance[m]'].cumsum()
+        
     output_file_name = f"output/altitudes_{file_name.replace('.kml', '.csv')}"
     
     # Ensure the output directory exists
@@ -243,21 +259,80 @@ def plot_elevation_profile(df, file_name, show_plot=True):
 
     # Plot elevation profile against distance (estimated)
     plt.figure(figsize=(28, 4))
-    x = np.linspace(0.0, df['Distance[Km]'].sum(), num=len(df))  # Making x axis data
+    x = np.linspace(0.0, df['Delta_Distance[m]'].sum(), num=len(df))  # Making x axis data
     plt.plot(x, df['Elevation[m]'])
 
     plt.title(f'Elevation(m) x Distance (km) for {file_name}')
     plt.ylabel("Elevation(m)")
     plt.xlabel("Distance(km)")
 
-    plt.xlim([0, df['Distance[Km]'].sum()])
+    plt.xlim([0, df['Delta_Distance[m]'].sum()])
 
     plt.grid()
     #plt.legend(fontsize='small')
     plt.savefig(f'output/altitude_x_distance_{file_name.replace(".kml", ".png")}', dpi=450, bbox_inches='tight', transparent=False)
     if show_plot:
         plt.show()
-        
+
+
+def plot_elevation_profile_with_pins(df, file_name, show_plot=True):
+    def avoid_overlapping_labels(labels, y_values, default_offset=1.5):
+        sorted_indices = np.argsort(y_values)
+        sorted_labels = [labels[i] for i in sorted_indices]
+        sorted_y_values = [y_values[i] for i in sorted_indices]
+
+        offsets = [default_offset] * len(labels)
+        for i, j in itertools.combinations(range(len(labels)), 2):
+            if abs(sorted_y_values[i] - sorted_y_values[j]) < default_offset * 2:
+                offsets[j] = offsets[i] + default_offset
+
+        unsorted_offsets = [0] * len(labels)
+        for i, offset in zip(sorted_indices, offsets):
+            unsorted_offsets[i] = offset
+        return unsorted_offsets
+
+    SMALL_SIZE = 12
+    MEDIUM_SIZE = 14
+    BIGGER_SIZE = 16
+
+    plt.rc('font', size=SMALL_SIZE)
+    plt.rc('axes', titlesize=SMALL_SIZE)
+    plt.rc('axes', labelsize=MEDIUM_SIZE)
+    plt.rc('xtick', labelsize=SMALL_SIZE)
+    plt.rc('ytick', labelsize=SMALL_SIZE)
+    plt.rc('legend', fontsize=SMALL_SIZE)
+    plt.rc('axes', titlesize=BIGGER_SIZE)
+
+    plt.figure(figsize=(28, 4))
+    x = np.linspace(0.0, df['Delta_Distance[m]'].sum(), num=len(df))
+    plt.plot(x, df['Elevation[m]'])
+
+    labels = []
+    label_positions = []
+
+    for i, row in df.iterrows():
+        if pd.notna(row['Pin']):
+            plt.plot(x[i], row['Elevation[m]'], 'ro')
+            labels.append(row['Pin'])
+            label_positions.append(i)
+
+    y_label_positions = [df.iloc[i]['Elevation[m]'] for i in label_positions]
+    label_offsets = avoid_overlapping_labels(labels, y_label_positions)
+
+    for label, x_pos, y_pos, offset in zip(labels, label_positions, y_label_positions, label_offsets):
+        plt.annotate(label, (x[x_pos], y_pos + offset), textcoords="offset points", xytext=(0, 10), ha='center')
+
+    plt.title(f'Elevation(m) x Distance (km) with Pins for {file_name}')
+    plt.ylabel("Elevation(m)")
+    plt.xlabel("Distance(km)")
+
+    plt.xlim([0, df['Delta_Distance[m]'].sum()])
+
+    plt.grid()
+    plt.savefig(f'output/altitude_x_distance_with_pins_{file_name.replace(".kml", ".png")}', dpi=450, bbox_inches='tight', transparent=False)
+    if show_plot:
+        plt.show()
+
         
 def parse_pins(file_name):
     """
@@ -305,3 +380,4 @@ def find_closest_points_for_pins(geo_df, pins):
 
         # Add the pin label to the closest point on the route
         geo_df.loc[closest_point_index, 'Pin'] = pin_name
+    return geo_df
