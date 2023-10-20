@@ -3,6 +3,7 @@ import os
 from functions import *
 
 ## User changeable area ##
+filename_kml = 'Coastal GasLink.kml' 
 filename_kml = 'Wetaskiwin_to_Leduc.kml' # File should be in [kml] folder.
 num_samples = 10                         # This is the number of samples to take along the path.
 ## End of user changeable area ##
